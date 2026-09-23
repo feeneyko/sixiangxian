@@ -22,6 +22,7 @@
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
+  button { -webkit-tap-highlight-color: transparent; }
   body {
     margin: 0; color: var(--ink); font-family: var(--font);
     background: var(--paper);
@@ -75,6 +76,10 @@
     background: transparent; color: var(--ink); font: inherit; font-size: 17px; outline: none;
   }
   .add::placeholder { color: var(--muted); }
+  .add-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+  .add-row .add { flex: 1; width: auto; min-width: 0; margin-top: 0; }
+  .add-btn { flex: none; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--qc, var(--ink)); cursor: pointer; }
+  .add-btn:hover { border-color: var(--qc, var(--ink)); }
   .add:focus { border-bottom-style: solid; border-bottom-color: var(--qc, var(--ink)); }
 
   /* 日程：就是一个清单 */
@@ -124,16 +129,16 @@
     <div class="y-axis"></div>
     <span class="axis-label y">重要</span>
     <span class="axis-label x">紧急</span>
-    <div class="quad q1" data-q="1"><h2>重要且紧急</h2><ul></ul><input class="add" placeholder="添加，按回车"></div>
-    <div class="quad q2" data-q="2"><h2>重要不紧急</h2><ul></ul><input class="add" placeholder="添加，按回车"></div>
-    <div class="quad q3" data-q="3"><h2>不重要不紧急</h2><ul></ul><input class="add" placeholder="添加，按回车"></div>
-    <div class="quad q4" data-q="4"><h2>不重要但紧急</h2><ul></ul><input class="add" placeholder="添加，按回车"></div>
+    <div class="quad q1" data-q="1"><h2>重要且紧急</h2><ul></ul><form class="add-row"><input class="add" placeholder="添加一项" enterkeyhint="done" autocomplete="off"><button type="button" class="add-btn" aria-label="添加"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></form></div>
+    <div class="quad q2" data-q="2"><h2>重要不紧急</h2><ul></ul><form class="add-row"><input class="add" placeholder="添加一项" enterkeyhint="done" autocomplete="off"><button type="button" class="add-btn" aria-label="添加"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></form></div>
+    <div class="quad q3" data-q="3"><h2>不重要不紧急</h2><ul></ul><form class="add-row"><input class="add" placeholder="添加一项" enterkeyhint="done" autocomplete="off"><button type="button" class="add-btn" aria-label="添加"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></form></div>
+    <div class="quad q4" data-q="4"><h2>不重要但紧急</h2><ul></ul><form class="add-row"><input class="add" placeholder="添加一项" enterkeyhint="done" autocomplete="off"><button type="button" class="add-btn" aria-label="添加"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></form></div>
   </section>
 
   <aside class="sched">
     <h2>日程</h2>
     <ul id="sched"></ul>
-    <input class="add" placeholder="例如：周五 10:00 看牙医">
+    <form class="add-row"><input class="add" placeholder="例如：周五 10:00 看牙医" enterkeyhint="done" autocomplete="off"><button type="button" class="add-btn" aria-label="添加"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></form>
   </aside>
 </div>
 
@@ -175,20 +180,32 @@ function changed() {
 }
 
 /* ================= 操作 ================= */
-// 按回车添加（输入法选字时按的回车不算）
-document.addEventListener('keydown', e => {
-  if (!e.target.classList.contains('add') || e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
-  const text = e.target.value.trim();
-  if (!text) return;
-  const quad = e.target.closest('.quad');
+function addFrom(input) {
+  const text = input.value.trim();
+  if (!text) { input.focus(); return; }
+  const quad = input.closest('.quad');
   if (quad) data.tasks.push({ id: uid(), text, q: Number(quad.dataset.q), done: false });
   else data.sched.push({ id: uid(), text });
-  e.target.value = '';
+  input.value = '';
   changed();
+}
+// 电脑：按回车添加（输入法选字时按的回车不算）
+document.addEventListener('keydown', e => {
+  if (!e.target.classList.contains('add') || e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
+  e.preventDefault();
+  addFrom(e.target);
+});
+// 手机：键盘上的「完成 / 前往」键
+document.addEventListener('submit', e => {
+  e.preventDefault();
+  const input = e.target.querySelector('.add');
+  if (input) addFrom(input);
 });
 
-// 点 × 删除
+// 点 + 添加，点 × 删除
 document.addEventListener('click', e => {
+  const addBtn = e.target.closest('.add-btn');
+  if (addBtn) { addFrom(addBtn.parentElement.querySelector('.add')); return; }
   if (!e.target.classList.contains('del')) return;
   const id = e.target.closest('li').dataset.id;
   data.tasks = data.tasks.filter(t => t.id !== id);
