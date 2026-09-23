@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>时间管理四象限</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23fafbf9'/%3E%3Cpath d='M16 5v22M5 16h22' stroke='%231c2b44' stroke-width='2.6' stroke-linecap='round'/%3E%3Ccircle cx='22.5' cy='9.5' r='3.6' fill='%23d42a3c'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+<style>
+  :root {
+    --paper: #fafbf9; --grid: rgba(58,110,180,.10); --card: #fff; --over: rgba(58,110,180,.08);
+    --ink: #1c2b44; --muted: #647085; --line: #d6deea;
+    --q1: #d42a3c; --q2: #1f58d6; --q3: #6b7079; --q4: #8a6400;
+    --font: "LXGW WenKai Screen", "Kaiti SC", "STKaiti", "KaiTi", serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #1c2320; --grid: rgba(225,238,230,.05); --card: #232b28; --over: rgba(225,238,230,.06);
+      --ink: #e7ede9; --muted: #8e9a93; --line: #36423d;
+      --q1: #ff7b7b; --q2: #8fb5ff; --q3: #b0b7be; --q4: #f6d360;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0; color: var(--ink); font-family: var(--font);
+    background: var(--paper);
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .page {
+    max-width: 1300px; margin: 0 auto; padding: 28px 20px 48px;
+    display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px 40px; align-items: start;
+  }
+  header { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+  h1 { margin: 0; font-weight: 400; font-size: 32px; }
+  h2 { margin: 0 0 8px; font-weight: 400; font-size: 22px; }
+
+  /* 坐标系：纵轴（y）= 重要，横轴（x）= 紧急 */
+  .plane {
+    --gap: 30px;
+    position: relative; display: grid;
+    grid-template-columns: 1fr 1fr; grid-template-rows: repeat(2, minmax(260px, 1fr));
+    padding: 30px 0;
+  }
+  .x-axis, .y-axis { position: absolute; background: var(--ink); }
+  .x-axis { left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px; }
+  .y-axis { top: 0; bottom: 0; left: 50%; width: 2px; margin-left: -1px; }
+  .x-axis::after { content: ""; position: absolute; right: -2px; top: -5px; border-left: 12px solid var(--ink); border-top: 6px solid transparent; border-bottom: 6px solid transparent; }
+  .y-axis::after { content: ""; position: absolute; top: -2px; left: -5px; border-bottom: 12px solid var(--ink); border-left: 6px solid transparent; border-right: 6px solid transparent; }
+  .axis-label { position: absolute; font-size: 17px; }
+  .axis-label.y { top: 2px; left: calc(50% + 14px); }
+  .axis-label.x { right: 0; top: calc(50% + 6px); }
+
+  .quad { min-width: 0; }
+  .quad h2 { color: var(--qc); }
+  .quad.over { background: var(--over); }
+  .q1 { --qc: var(--q1); grid-area: 1 / 2; padding: 6px 6px var(--gap) var(--gap); }  /* 右上 */
+  .q2 { --qc: var(--q2); grid-area: 1 / 1; padding: 6px var(--gap) var(--gap) 6px; }  /* 左上 */
+  .q3 { --qc: var(--q3); grid-area: 2 / 1; padding: var(--gap) var(--gap) 6px 6px; }  /* 左下 */
+  .q4 { --qc: var(--q4); grid-area: 2 / 2; padding: var(--gap) 6px 6px var(--gap); }  /* 右下 */
+
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0; }
+  li input { flex: none; width: 16px; height: 16px; margin: 5px 0 0; accent-color: var(--qc); }
+  .text { flex: 1; min-width: 0; font-size: 17px; line-height: 1.5; overflow-wrap: anywhere; }
+  .done .text { color: var(--muted); text-decoration: line-through; }
+  .del { flex: none; border: 0; background: none; padding: 0 4px; color: var(--muted); font: inherit; font-size: 20px; line-height: 1.2; cursor: pointer; opacity: 0; }
+  li:hover .del, .del:focus-visible { opacity: 1; }
+  @media (hover: none) { .del { opacity: .6; } }
+
+  .add {
+    width: 100%; margin-top: 6px; padding: 6px 2px;
+    border: 0; border-bottom: 1.5px dashed var(--muted); border-radius: 0;
+    background: transparent; color: var(--ink); font: inherit; font-size: 17px; outline: none;
+  }
+  .add::placeholder { color: var(--muted); }
+  .add:focus { border-bottom-style: solid; border-bottom-color: var(--qc, var(--ink)); }
+
+  /* 日程：就是一个清单 */
+  .sched { position: sticky; top: 20px; padding: 16px 18px 18px; background: var(--card); border: 1px solid var(--line); border-radius: 6px; }
+  .sched h2 { font-size: 24px; }
+  .sched li { padding: 8px 0; border-bottom: 1px solid var(--line); }
+
+  /* 云同步 */
+  .sync-btn { border: 0; background: none; padding: 4px 0; color: var(--muted); font: inherit; font-size: 15px; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--line); }
+  .sync-btn.err { color: var(--q1); }
+  .sync-panel { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; padding: 14px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 6px; }
+  .sync-panel label { flex: 1 1 220px; display: grid; gap: 2px; font-size: 13px; color: var(--muted); }
+  .sync-panel input { padding: 6px 2px; border: 0; border-bottom: 1.5px solid var(--line); border-radius: 0; background: transparent; color: var(--ink); font: inherit; font-size: 16px; outline: none; }
+  .sync-panel input:focus { border-bottom-color: var(--ink); }
+  .sync-panel button { padding: 6px 14px; border: 1px solid var(--ink); border-radius: 6px; background: var(--ink); color: var(--paper); font: inherit; font-size: 15px; cursor: pointer; }
+  .sync-panel button.plain { background: transparent; color: var(--ink); border-color: var(--line); }
+  .sync-panel p { flex-basis: 100%; margin: 0; font-size: 13px; color: var(--muted); }
+  .sync-panel p.err { color: var(--q1); }
+
+  /* 手机 */
+  @media (max-width: 760px) {
+    .page { grid-template-columns: 1fr; padding: 20px 12px 40px; }
+    .plane { --gap: 14px; grid-template-rows: repeat(2, minmax(190px, 1fr)); padding: 26px 0; }
+    h2 { font-size: 18px; }
+    .text, .add { font-size: 16px; }
+    .sched { position: static; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>时间管理四象限</h1>
+    <button class="sync-btn" id="syncBtn">未开启云同步</button>
+  </header>
+
+  <div class="sync-panel" id="syncPanel" hidden>
+    <label>数据仓库（私有）<input id="repoInput" placeholder="用户名/sixiangxian-data" autocomplete="off" spellcheck="false"></label>
+    <label>Token<input id="tokenInput" type="password" placeholder="github_pat_…" autocomplete="off"></label>
+    <button id="connectBtn">连接</button>
+    <button class="plain" id="disconnectBtn" hidden>断开</button>
+    <p id="syncHint"></p>
+  </div>
+
+  <section class="plane">
+    <div class="x-axis"></div>
+    <div class="y-axis"></div>
+    <span class="axis-label y">重要</span>
+    <span class="axis-label x">紧急</span>
+    <div class="quad q1" data-q="1"><h2>重要且紧急</h2><ul></ul><input class="add" placeholder="添加，按回车"></div>
+    <div class="quad q2" data-q="2"><h2>重要不紧急</h2><ul></ul><input class="add" placeholder="添加，按回车"></div>
+    <div class="quad q3" data-q="3"><h2>不重要不紧急</h2><ul></ul><input class="add" placeholder="添加，按回车"></div>
+    <div class="quad q4" data-q="4"><h2>不重要但紧急</h2><ul></ul><input class="add" placeholder="添加，按回车"></div>
+  </section>
+
+  <aside class="sched">
+    <h2>日程</h2>
+    <ul id="sched"></ul>
+    <input class="add" placeholder="例如：周五 10:00 看牙医">
+  </aside>
+</div>
+
+<script>
+/* ================= 本地数据 ================= */
+const KEY = 'sixiangxian:v2';
+let data = { tasks: [], sched: [] };
+try {
+  const saved = JSON.parse(localStorage.getItem(KEY));
+  if (saved && Array.isArray(saved.tasks) && Array.isArray(saved.sched)) data = { tasks: saved.tasks, sched: saved.sched };
+} catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {} }
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const clone = o => JSON.parse(JSON.stringify(o));
+
+function render() {
+  document.querySelectorAll('.quad').forEach(quad => {
+    const q = Number(quad.dataset.q);
+    quad.querySelector('ul').innerHTML = data.tasks.filter(t => t.q === q).map(t => `
+      <li class="${t.done ? 'done' : ''}" draggable="true" data-id="${t.id}">
+        <input type="checkbox"${t.done ? ' checked' : ''} aria-label="完成">
+        <span class="text">${esc(t.text)}</span>
+        <button class="del" aria-label="删除">×</button>
+      </li>`).join('');
+  });
+  $('sched').innerHTML = data.sched.map(s => `
+    <li data-id="${s.id}"><span class="text">${esc(s.text)}</span><button class="del" aria-label="删除">×</button></li>`).join('');
+}
+
+// 每次修改：先存本地，开了云同步的话 1.5 秒后上传
+let edits = 0;
+function changed() {
+  edits++;
+  save(); render();
+  if (sync.token) { sync.dirty = true; saveSync(); schedulePush(); }
+}
+
+/* ================= 操作 ================= */
+// 按回车添加（输入法选字时按的回车不算）
+document.addEventListener('keydown', e => {
+  if (!e.target.classList.contains('add') || e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
+  const text = e.target.value.trim();
+  if (!text) return;
+  const quad = e.target.closest('.quad');
+  if (quad) data.tasks.push({ id: uid(), text, q: Number(quad.dataset.q), done: false });
+  else data.sched.push({ id: uid(), text });
+  e.target.value = '';
+  changed();
+});
+
+// 点 × 删除
+document.addEventListener('click', e => {
+  if (!e.target.classList.contains('del')) return;
+  const id = e.target.closest('li').dataset.id;
+  data.tasks = data.tasks.filter(t => t.id !== id);
+  data.sched = data.sched.filter(s => s.id !== id);
+  changed();
+});
+
+// 打勾 = 完成
+document.addEventListener('change', e => {
+  if (e.target.type !== 'checkbox' || !e.target.closest('.quad')) return;
+  const task = data.tasks.find(t => t.id === e.target.closest('li').dataset.id);
+  if (task) { task.done = e.target.checked; changed(); }
+});
+
+// 电脑上可以把任务拖到别的象限
+let dragId = null;
+const quadAt = e => { const el = e.target.nodeType === 1 ? e.target : e.target.parentElement; return el && el.closest('.quad'); };
+document.addEventListener('dragstart', e => {
+  const li = e.target.closest && e.target.closest('.quad li');
+  if (!li) return;
+  dragId = li.dataset.id;
+  e.dataTransfer.setData('text/plain', dragId);
+});
+document.addEventListener('dragover', e => {
+  const quad = dragId && quadAt(e);
+  if (!quad) return;
+  e.preventDefault();
+  document.querySelectorAll('.quad.over').forEach(q => q.classList.remove('over'));
+  quad.classList.add('over');
+});
+document.addEventListener('drop', e => {
+  const quad = dragId && quadAt(e);
+  if (!quad) return;
+  e.preventDefault();
+  const task = data.tasks.find(t => t.id === dragId);
+  if (task) { task.q = Number(quad.dataset.q); data.tasks = data.tasks.filter(t => t !== task).concat(task); changed(); }
+});
+document.addEventListener('dragend', () => {
+  dragId = null;
+  document.querySelectorAll('.quad.over').forEach(q => q.classList.remove('over'));
+});
+
+/* ================= 云同步：数据存在你自己的 GitHub 私有仓库里 ================= */
+const SYNC_KEY = 'sixiangxian:sync';
+const FILE = 'data.json';
+const EMPTY = { tasks: [], sched: [] };
+const HINT = 'Token 只保存在这台设备的浏览器里，不会进到任何仓库。';
+let sync = {};  // { repo, token, sha, base, dirty }
+try { sync = JSON.parse(localStorage.getItem(SYNC_KEY)) || {}; } catch (e) {}
+function saveSync() { try { localStorage.setItem(SYNC_KEY, JSON.stringify(sync)); } catch (e) {} }
+
+function showStatus(text, isError) {
+  $('syncBtn').textContent = text;
+  $('syncBtn').classList.toggle('err', !!isError);
+  $('syncHint').textContent = isError ? (REASONS[lastError] || '连不上 GitHub，联网后会自动重试。') : HINT;
+  $('syncHint').classList.toggle('err', !!isError);
+}
+const REASONS = {
+  401: 'Token 不对或已过期，请重新生成一个再连接。',
+  403: 'Token 没有写入权限：Contents 需要选 Read and write。',
+  404: '找不到仓库：检查仓库名，以及 token 有没有选这个仓库。',
+};
+let lastError = '';
+
+function gh(method, body) {
+  return fetch(`https://api.github.com/repos/${sync.repo}/contents/${FILE}`, {
+    method, cache: 'no-store',
+    headers: { Authorization: `Bearer ${sync.token}`, Accept: 'application/vnd.github+json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+async function getRemote() {
+  const r = await gh('GET');
+  if (r.status === 404) return null;                  // 还没有数据文件
+  if (!r.ok) throw new Error(r.status);
+  const j = await r.json();
+  const bytes = Uint8Array.from(atob(j.content.replace(/\s/g, '')), c => c.charCodeAt(0));
+  const d = JSON.parse(new TextDecoder().decode(bytes));
+  return { sha: j.sha, data: { tasks: d.tasks || [], sched: d.sched || [] } };
+}
+async function putRemote(obj, sha) {
+  let bin = '';
+  new TextEncoder().encode(JSON.stringify(obj, null, 1)).forEach(b => { bin += String.fromCharCode(b); });
+  const body = { message: '更新', content: btoa(bin) };
+  if (sha) body.sha = sha;
+  const r = await gh('PUT', body);
+  if (!r.ok) throw new Error(r.status);
+  return (await r.json()).content.sha;
+}
+
+// 两台设备都改过时：把“这台设备上次同步后的改动”套到云端最新数据上
+function mergeList(base, mine, theirs) {
+  const before = new Map(base.map(x => [x.id, JSON.stringify(x)]));
+  const mineIds = new Set(mine.map(x => x.id));
+  const out = theirs.filter(x => !(before.has(x.id) && !mineIds.has(x.id)));   // 这台设备删掉的
+  for (const x of mine) {
+    const i = out.findIndex(y => y.id === x.id);
+    if (!before.has(x.id)) { if (i < 0) out.push(x); }                          // 这台设备新加的
+    else if (before.get(x.id) !== JSON.stringify(x) && i >= 0) out[i] = x;      // 这台设备改过的
+  }
+  return out;
+}
+const merge = (base, mine, theirs) => ({
+  tasks: mergeList(base.tasks, mine.tasks, theirs.tasks),
+  sched: mergeList(base.sched, mine.sched, theirs.sched),
+});
+
+let busy = false, timer = 0;
+function schedulePush(ms = 1500) { clearTimeout(timer); timer = setTimeout(push, ms); }
+
+// 上传
+async function push() {
+  if (!sync.token) return;
+  if (busy) { schedulePush(); return; }
+  busy = true;
+  showStatus('同步中…');
+  const startEdits = edits, mine = clone(data);
+  try {
+    let next, sha;
+    for (let attempt = 1; ; attempt++) {
+      const remote = await getRemote();
+      next = remote && remote.sha !== sync.sha ? merge(sync.base || EMPTY, mine, remote.data) : mine;
+      if (remote && JSON.stringify(next) === JSON.stringify(remote.data)) { sha = remote.sha; break; }  // 云端已经一样
+      try { sha = await putRemote(next, remote && remote.sha); break; }
+      catch (e) { if (attempt < 2 && (e.message === '409' || e.message === '422')) continue; throw e; }
+    }
+    const current = clone(data);
+    const result = edits === startEdits ? next : merge(mine, current, next);   // 上传期间的新改动接着套上
+    Object.assign(sync, { sha, base: next, dirty: edits !== startEdits });
+    saveSync();
+    if (JSON.stringify(result) !== JSON.stringify(current)) { data = result; save(); render(); }
+    lastError = '';
+    showStatus('已同步');
+    if (sync.dirty) schedulePush();
+  } catch (e) {
+    lastError = e.message;
+    showStatus('同步失败', true);
+  }
+  busy = false;
+}
+
+// 下载（打开页面、切回页面、每 30 秒）
+async function pull() {
+  if (!sync.token || busy || document.hidden) return;
+  if (sync.dirty) { push(); return; }
+  busy = true;
+  try {
+    const remote = await getRemote();
+    busy = false;
+    if (!remote) { push(); return; }                    // 云端还没数据：把这台设备的传上去
+    if (remote.sha !== sync.sha && !sync.dirty) {
+      Object.assign(sync, { sha: remote.sha, base: clone(remote.data) });
+      saveSync();
+      data = remote.data; save(); render();
+    }
+    lastError = '';
+    showStatus('已同步');
+  } catch (e) {
+    busy = false;
+    lastError = e.message;
+    showStatus('同步失败', true);
+  }
+}
+
+// 同步设置面板
+$('repoInput').value = sync.repo || (location.hostname.endsWith('.github.io') ? location.hostname.split('.')[0] + '/sixiangxian-data' : '');
+$('disconnectBtn').hidden = !sync.token;
+$('syncBtn').addEventListener('click', () => { $('syncPanel').hidden = !$('syncPanel').hidden; });
+$('connectBtn').addEventListener('click', async () => {
+  const repo = $('repoInput').value.trim(), token = $('tokenInput').value.trim() || sync.token;
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) { $('syncHint').textContent = '仓库名的格式是「用户名/仓库名」。'; $('syncHint').classList.add('err'); return; }
+  if (!token) { $('syncHint').textContent = '请粘贴 token。'; $('syncHint').classList.add('err'); return; }
+  sync = { repo, token, dirty: true };   // 第一次连接：把这台设备的数据和云端合并
+  saveSync();
+  $('tokenInput').value = '';
+  $('disconnectBtn').hidden = false;
+  await push();
+  if (!lastError) $('syncPanel').hidden = true;
+});
+$('disconnectBtn').addEventListener('click', () => {
+  sync = {};
+  saveSync();
+  $('disconnectBtn').hidden = true;
+  showStatus('未开启云同步');
+});
+document.addEventListener('visibilitychange', () => {
+  if (!sync.token) return;
+  if (document.hidden) { if (sync.dirty) { clearTimeout(timer); push(); } }   // 切走前把没传完的传上去
+  else pull();
+});
+window.addEventListener('online', () => pull());
+setInterval(pull, 30000);
+
+/* ================= 开始 ================= */
+render();
+showStatus(sync.token ? '同步中…' : '未开启云同步');
+if (sync.token) sync.dirty ? push() : pull();
+</script>
+</body>
+</html>
