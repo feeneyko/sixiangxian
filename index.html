@@ -31,7 +31,7 @@
   }
   .page {
     max-width: 1300px; margin: 0 auto; padding: 28px 20px 48px;
-    display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px 40px; align-items: start;
+    display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px 40px; align-items: start;
   }
   header { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
   h1 { margin: 0; font-weight: 400; font-size: 32px; }
@@ -61,31 +61,64 @@
   .q3 { --qc: var(--q3); grid-area: 2 / 1; padding: var(--gap) var(--gap) 6px 6px; }  /* 左下 */
   .q4 { --qc: var(--q4); grid-area: 2 / 2; padding: var(--gap) 6px 6px var(--gap); }  /* 右下 */
 
+  /* 每一条 */
   ul { list-style: none; margin: 0; padding: 0; }
-  li { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0; }
-  li input { flex: none; width: 16px; height: 16px; margin: 5px 0 0; accent-color: var(--qc); }
-  .text { flex: 1; min-width: 0; font-size: 17px; line-height: 1.5; overflow-wrap: anywhere; }
-  .done .text { color: var(--muted); text-decoration: line-through; }
+  li { display: flex; align-items: flex-start; gap: 6px; padding: 4px 0; }
+  .grip {
+    flex: none; width: 20px; height: 26px; margin: 0 -4px 0 -6px; padding: 4px 5px;
+    background-image: radial-gradient(circle, var(--muted) 1.1px, transparent 1.5px);
+    background-size: 5px 6px; background-origin: content-box; background-clip: content-box;
+    cursor: grab; touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; opacity: .6;
+  }
+  .grip:hover { opacity: 1; }
+  li input[type=checkbox] { flex: none; width: 16px; height: 16px; margin: 5px 0 0; accent-color: var(--qc); }
+  .body { flex: 1; min-width: 0; }
+  .text { display: block; font-size: 17px; line-height: 1.5; overflow-wrap: anywhere; }
+  .meta { display: block; font-size: 12.5px; line-height: 1.4; color: var(--muted); }
+  .meta:empty { display: none; }
+  .left { margin-left: 8px; }
+  .left.soon { color: var(--q1); }
+  .done .text, .past .text { color: var(--muted); }
+  .done .text { text-decoration: line-through; }
   .del { flex: none; border: 0; background: none; padding: 0 4px; color: var(--muted); font: inherit; font-size: 20px; line-height: 1.2; cursor: pointer; opacity: 0; }
   li:hover .del, .del:focus-visible { opacity: 1; }
   @media (hover: none) { .del { opacity: .6; } }
 
+  /* 拖动时 */
+  .placeholder { border: 1.5px dashed var(--muted); border-radius: 6px; background: var(--over); }
+  .drag-src { display: none; }
+  .ghost { position: fixed; left: 0; top: 0; z-index: 50; margin: 0; padding: 4px 6px; background: var(--card); border-radius: 6px; box-shadow: 0 10px 28px rgba(0,0,0,.2); pointer-events: none; }
+  .ghost .del { opacity: 0; }
+  body.dragging { cursor: grabbing; -webkit-user-select: none; user-select: none; }
+
+  /* 输入 */
   .add {
-    width: 100%; margin-top: 6px; padding: 6px 2px;
+    width: 100%; padding: 6px 2px;
     border: 0; border-bottom: 1.5px dashed var(--muted); border-radius: 0;
     background: transparent; color: var(--ink); font: inherit; font-size: 17px; outline: none;
   }
   .add::placeholder { color: var(--muted); }
+  .add:focus { border-bottom-style: solid; border-bottom-color: var(--qc, var(--ink)); }
   .add-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
-  .add-row .add { flex: 1; width: auto; min-width: 0; margin-top: 0; }
+  .add-row .add { flex: 1; width: auto; min-width: 0; }
   .add-btn { flex: none; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--qc, var(--ink)); cursor: pointer; }
   .add-btn:hover { border-color: var(--qc, var(--ink)); }
-  .add:focus { border-bottom-style: solid; border-bottom-color: var(--qc, var(--ink)); }
 
-  /* 日程：就是一个清单 */
+  /* 日程 */
   .sched { position: sticky; top: 20px; padding: 16px 18px 18px; background: var(--card); border: 1px solid var(--line); border-radius: 6px; }
   .sched h2 { font-size: 24px; }
   .sched li { padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .sched-add { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto; gap: 8px 10px; align-items: end; margin-top: 10px; }
+  .sched-add .add { grid-column: 1 / -1; }
+  .sched-add label { display: grid; gap: 2px; min-width: 0; font-size: 12px; color: var(--muted); }
+  .sched-add input[type=date], .sched-add input[type=time] {
+    width: 100%; min-width: 0; min-height: 34px; padding: 5px 2px;
+    border: 0; border-bottom: 1.5px solid var(--line); border-radius: 0;
+    background: transparent; color: var(--ink); font: inherit; font-size: 16px;
+    -webkit-appearance: none; appearance: none;
+  }
+  .sched-add input[type=date]:focus, .sched-add input[type=time]:focus { outline: none; border-bottom-color: var(--ink); }
+  input::-webkit-date-and-time-value { text-align: left; }
 
   /* 云同步 */
   .sync-btn { border: 0; background: none; padding: 4px 0; color: var(--muted); font: inherit; font-size: 15px; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--line); }
@@ -104,7 +137,8 @@
     .page { grid-template-columns: 1fr; padding: 20px 12px 40px; }
     .plane { --gap: 14px; grid-template-rows: repeat(2, minmax(190px, 1fr)); padding: 26px 0; }
     h2 { font-size: 18px; }
-    .text, .add { font-size: 16px; }
+    .quad .text { font-size: 15px; }
+    .add { font-size: 16px; }
     .sched { position: static; }
   }
 </style>
@@ -129,16 +163,21 @@
     <div class="y-axis"></div>
     <span class="axis-label y">重要</span>
     <span class="axis-label x">紧急</span>
-    <div class="quad q1" data-q="1"><h2>重要且紧急</h2><ul></ul><form class="add-row"><input class="add" placeholder="添加一项" enterkeyhint="done" autocomplete="off"><button type="button" class="add-btn" aria-label="添加"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></form></div>
-    <div class="quad q2" data-q="2"><h2>重要不紧急</h2><ul></ul><form class="add-row"><input class="add" placeholder="添加一项" enterkeyhint="done" autocomplete="off"><button type="button" class="add-btn" aria-label="添加"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></form></div>
-    <div class="quad q3" data-q="3"><h2>不重要不紧急</h2><ul></ul><form class="add-row"><input class="add" placeholder="添加一项" enterkeyhint="done" autocomplete="off"><button type="button" class="add-btn" aria-label="添加"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></form></div>
-    <div class="quad q4" data-q="4"><h2>不重要但紧急</h2><ul></ul><form class="add-row"><input class="add" placeholder="添加一项" enterkeyhint="done" autocomplete="off"><button type="button" class="add-btn" aria-label="添加"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></form></div>
+    <div class="quad q1" data-q="1"><h2>重要且紧急</h2><ul></ul><form class="add-row"><input class="add" placeholder="添加一项" enterkeyhint="done" autocomplete="off"><button type="submit" class="add-btn" aria-label="添加"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></form></div>
+    <div class="quad q2" data-q="2"><h2>重要不紧急</h2><ul></ul><form class="add-row"><input class="add" placeholder="添加一项" enterkeyhint="done" autocomplete="off"><button type="submit" class="add-btn" aria-label="添加"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></form></div>
+    <div class="quad q3" data-q="3"><h2>不重要不紧急</h2><ul></ul><form class="add-row"><input class="add" placeholder="添加一项" enterkeyhint="done" autocomplete="off"><button type="submit" class="add-btn" aria-label="添加"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></form></div>
+    <div class="quad q4" data-q="4"><h2>不重要但紧急</h2><ul></ul><form class="add-row"><input class="add" placeholder="添加一项" enterkeyhint="done" autocomplete="off"><button type="submit" class="add-btn" aria-label="添加"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></form></div>
   </section>
 
   <aside class="sched">
     <h2>日程</h2>
     <ul id="sched"></ul>
-    <form class="add-row"><input class="add" placeholder="例如：周五 10:00 看牙医" enterkeyhint="done" autocomplete="off"><button type="button" class="add-btn" aria-label="添加"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></form>
+    <form class="sched-add">
+      <input class="add" placeholder="例如：看牙医" enterkeyhint="done" autocomplete="off">
+      <label>日期<input type="date" class="add-date"></label>
+      <label>时间<input type="time" class="add-time"></label>
+      <button type="submit" class="add-btn" aria-label="添加"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+    </form>
   </aside>
 </div>
 
@@ -157,18 +196,51 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const clone = o => JSON.parse(JSON.stringify(o));
 
+/* ================= 日期小工具 ================= */
+const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseYmd = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const dayStart = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const daysFromToday = d => Math.round((dayStart(d) - dayStart(new Date())) / 864e5);  // 明天 = 1，昨天 = -1
+
+// 「几天前添加」：新条目记录了 created；旧条目从 id 里读出创建时间
+function addedText(t) {
+  let ts = t.created;
+  if (!ts) { const n = parseInt(String(t.id).slice(0, 8), 36); if (n > 1577836800000 && n < Date.now() + 864e5) ts = n; }
+  if (!ts) return '';
+  const n = -daysFromToday(new Date(ts));
+  return n <= 0 ? '今天添加' : n === 1 ? '昨天添加' : `${n} 天前添加`;
+}
+// 日程：「9月25日 周五 10:00  还有 2 天」
+function whenHTML(s) {
+  if (!s.date) return '';
+  const d = parseYmd(s.date), n = daysFromToday(d);
+  const year = d.getFullYear() !== new Date().getFullYear() ? d.getFullYear() + '年' : '';
+  const left = n === 0 ? '今天' : n === 1 ? '明天' : n > 1 ? `还有 ${n} 天` : `已过 ${-n} 天`;
+  return `<span class="meta">${year}${d.getMonth() + 1}月${d.getDate()}日 周${WEEK[d.getDay()]}${s.time ? ' ' + s.time : ''}<span class="left${n === 0 || n === 1 ? ' soon' : ''}">${left}</span></span>`;
+}
+
+/* ================= 显示 ================= */
+let drag = null, renderLater = false;
 function render() {
+  if (drag) { renderLater = true; return; }   // 拖动中先不刷新
   document.querySelectorAll('.quad').forEach(quad => {
     const q = Number(quad.dataset.q);
     quad.querySelector('ul').innerHTML = data.tasks.filter(t => t.q === q).map(t => `
-      <li class="${t.done ? 'done' : ''}" draggable="true" data-id="${t.id}">
+      <li class="${t.done ? 'done' : ''}" data-id="${t.id}">
+        <span class="grip" title="按住拖动"></span>
         <input type="checkbox"${t.done ? ' checked' : ''} aria-label="完成">
-        <span class="text">${esc(t.text)}</span>
+        <span class="body"><span class="text">${esc(t.text)}</span><span class="meta">${addedText(t)}</span></span>
         <button class="del" aria-label="删除">×</button>
       </li>`).join('');
   });
   $('sched').innerHTML = data.sched.map(s => `
-    <li data-id="${s.id}"><span class="text">${esc(s.text)}</span><button class="del" aria-label="删除">×</button></li>`).join('');
+    <li class="${s.date && daysFromToday(parseYmd(s.date)) < 0 ? 'past' : ''}" data-id="${s.id}">
+      <span class="grip" title="按住拖动"></span>
+      <span class="body"><span class="text">${esc(s.text)}</span>${whenHTML(s)}</span>
+      <button class="del" aria-label="删除">×</button>
+    </li>`).join('');
 }
 
 // 每次修改：先存本地，开了云同步的话 1.5 秒后上传
@@ -179,13 +251,24 @@ function changed() {
   if (sync.token) { sync.dirty = true; saveSync(); schedulePush(); }
 }
 
-/* ================= 操作 ================= */
+/* ================= 添加 / 删除 / 完成 ================= */
 function addFrom(input) {
   const text = input.value.trim();
   if (!text) { input.focus(); return; }
   const quad = input.closest('.quad');
-  if (quad) data.tasks.push({ id: uid(), text, q: Number(quad.dataset.q), done: false });
-  else data.sched.push({ id: uid(), text });
+  if (quad) {
+    data.tasks.push({ id: uid(), text, q: Number(quad.dataset.q), done: false, created: Date.now() });
+  } else {
+    const dateEl = input.form.querySelector('.add-date'), timeEl = input.form.querySelector('.add-time');
+    let date = dateEl.value, time = timeEl.value.slice(0, 5);
+    if (time && !date) date = ymd(new Date());          // 只选了时间：当作今天
+    const item = { id: uid(), text, date, time };
+    // 有日期的按时间插到合适的位置（之后也可以拖动调整）
+    const key = x => x.date + ' ' + (x.time || '');
+    const i = date ? data.sched.findIndex(x => x.date && key(x) > key(item)) : -1;
+    if (i < 0) data.sched.push(item); else data.sched.splice(i, 0, item);
+    dateEl.value = ''; timeEl.value = '';
+  }
   input.value = '';
   changed();
 }
@@ -195,24 +278,22 @@ document.addEventListener('keydown', e => {
   e.preventDefault();
   addFrom(e.target);
 });
-// 手机：键盘上的「完成 / 前往」键
+// 手机键盘上的「完成 / 前往」键（备用）
 document.addEventListener('submit', e => {
   e.preventDefault();
   const input = e.target.querySelector('.add');
   if (input) addFrom(input);
 });
-
 // 点 + 添加，点 × 删除
 document.addEventListener('click', e => {
   const addBtn = e.target.closest('.add-btn');
-  if (addBtn) { addFrom(addBtn.parentElement.querySelector('.add')); return; }
+  if (addBtn) { e.preventDefault(); addFrom(addBtn.form.querySelector('.add')); return; }
   if (!e.target.classList.contains('del')) return;
   const id = e.target.closest('li').dataset.id;
   data.tasks = data.tasks.filter(t => t.id !== id);
   data.sched = data.sched.filter(s => s.id !== id);
   changed();
 });
-
 // 打勾 = 完成
 document.addEventListener('change', e => {
   if (e.target.type !== 'checkbox' || !e.target.closest('.quad')) return;
@@ -220,33 +301,97 @@ document.addEventListener('change', e => {
   if (task) { task.done = e.target.checked; changed(); }
 });
 
-// 电脑上可以把任务拖到别的象限
-let dragId = null;
-const quadAt = e => { const el = e.target.nodeType === 1 ? e.target : e.target.parentElement; return el && el.closest('.quad'); };
-document.addEventListener('dragstart', e => {
-  const li = e.target.closest && e.target.closest('.quad li');
-  if (!li) return;
-  dragId = li.dataset.id;
-  e.dataTransfer.setData('text/plain', dragId);
-});
-document.addEventListener('dragover', e => {
-  const quad = dragId && quadAt(e);
-  if (!quad) return;
+/* ================= 拖动排序：按住左边的 ⋮⋮ 拖（电脑、手机都可以） ================= */
+document.addEventListener('pointerdown', e => {
+  const grip = e.target.closest('.grip');
+  if (!grip || e.button > 0) return;
   e.preventDefault();
-  document.querySelectorAll('.quad.over').forEach(q => q.classList.remove('over'));
-  quad.classList.add('over');
+  const li = grip.closest('li');
+  drag = { li, id: li.dataset.id, isTask: !!li.closest('.quad'), pointerId: e.pointerId,
+           x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, started: false, before: JSON.stringify(data) };
+  try { document.body.setPointerCapture(e.pointerId); } catch (_) {}
 });
-document.addEventListener('drop', e => {
-  const quad = dragId && quadAt(e);
-  if (!quad) return;
+document.addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.pointerId) return;
+  drag.x = e.clientX; drag.y = e.clientY;
+  if (!drag.started) {
+    if (Math.hypot(drag.x - drag.x0, drag.y - drag.y0) < 4) return;
+    startDrag();
+  }
   e.preventDefault();
-  const task = data.tasks.find(t => t.id === dragId);
-  if (task) { task.q = Number(quad.dataset.q); data.tasks = data.tasks.filter(t => t !== task).concat(task); changed(); }
+  moveDrag();
 });
-document.addEventListener('dragend', () => {
-  dragId = null;
+document.addEventListener('pointerup', endDrag);
+document.addEventListener('pointercancel', endDrag);
+
+function startDrag() {
+  const li = drag.li, r = li.getBoundingClientRect();
+  drag.started = true;
+  drag.dx = drag.x0 - r.left; drag.dy = drag.y0 - r.top;
+  drag.ghost = li.cloneNode(true);
+  drag.ghost.classList.add('ghost');
+  drag.ghost.style.width = r.width + 'px';
+  drag.ghost.style.setProperty('--qc', getComputedStyle(li).getPropertyValue('--qc'));
+  document.body.appendChild(drag.ghost);
+  drag.ph = document.createElement('li');
+  drag.ph.className = 'placeholder';
+  drag.ph.style.height = r.height + 'px';
+  li.after(drag.ph);
+  li.classList.add('drag-src');
+  document.body.classList.add('dragging');
+  requestAnimationFrame(autoScroll);
+}
+function moveDrag() {
+  drag.ghost.style.transform = `translate(${drag.x - drag.dx}px, ${drag.y - drag.dy}px)`;
+  const el = document.elementFromPoint(drag.x, drag.y);
+  const zone = el && (drag.isTask ? el.closest('.quad') : el.closest('.sched'));   // 任务只能放进象限，日程只在日程里排
+  document.querySelectorAll('.quad.over').forEach(q => { if (q !== zone) q.classList.remove('over'); });
+  if (!zone) return;
+  if (drag.isTask) zone.classList.add('over');
+  const ul = zone.querySelector('ul');
+  const items = [...ul.children].filter(x => x !== drag.ph && x !== drag.li);
+  const before = items.find(x => { const r = x.getBoundingClientRect(); return drag.y < r.top + r.height / 2; }) || null;
+  if (drag.ph.parentElement !== ul || drag.ph.nextElementSibling !== before) ul.insertBefore(drag.ph, before);
+}
+function autoScroll() {                              // 拖到屏幕上下边缘时自动滚动
+  if (!drag || !drag.started) return;
+  const edge = 70, h = window.innerHeight;
+  const v = drag.y < edge ? -Math.ceil((edge - drag.y) / 5) : drag.y > h - edge ? Math.ceil((drag.y - h + edge) / 5) : 0;
+  if (v) { window.scrollBy(0, v); moveDrag(); }
+  requestAnimationFrame(autoScroll);
+}
+function endDrag(e) {
+  if (!drag || e.pointerId !== drag.pointerId) return;
+  const d = drag;
+  drag = null;
+  document.body.classList.remove('dragging');
   document.querySelectorAll('.quad.over').forEach(q => q.classList.remove('over'));
-});
+  if (!d.started) { if (renderLater) { renderLater = false; render(); } return; }
+  d.ghost.remove();
+  // 按占位框的位置得出新顺序
+  const idAt = el => (el === d.ph ? d.id : el === d.li ? null : el.dataset.id);
+  if (d.isTask) {
+    const next = [];
+    document.querySelectorAll('.quad').forEach(quad => {
+      for (const el of quad.querySelector('ul').children) {
+        const t = data.tasks.find(x => x.id === idAt(el));
+        if (!t) continue;
+        if (t.id === d.id) t.q = Number(quad.dataset.q);
+        next.push(t);
+      }
+    });
+    if (next.length === data.tasks.length) data.tasks = next;
+  } else {
+    const next = [...$('sched').children].map(el => data.sched.find(x => x.id === idAt(el))).filter(Boolean);
+    if (next.length === data.sched.length) data.sched = next;
+  }
+  renderLater = false;
+  if (JSON.stringify(data) !== d.before) changed(); else render();
+}
+
+// 过了午夜「还有几天 / 几天前」要跟着变
+setInterval(render, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
 
 /* ================= 云同步：数据存在你自己的 GitHub 私有仓库里 ================= */
 const SYNC_KEY = 'sixiangxian:sync';
